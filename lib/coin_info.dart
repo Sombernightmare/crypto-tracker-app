@@ -34,17 +34,20 @@ const List<String> cryptoList = [
 const coinAvgURL = 'https://apiv2.bitcoinaverage.com/indices/global/ticker';
 
 class CoinInfo {
-  Future getCoinData(String currency) async {
-    String url = '$coinAvgURL/BTC$currency';
-    http.Response response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      var decodeData = jsonDecode(response.body);
-      double lastPrice = decodeData['last'];
-      return lastPrice;
-    } else {
-      print(response.statusCode);
-      throw 'Problem with get request';
+  Future getCoinData(String selectedCurrency) async {
+    Map<String, String> prices = {};
+    for (String coin in cryptoList) {
+      String requestURL = '$coinAvgURL/$coin$selectedCurrency';
+      http.Response response = await http.get(requestURL);
+      if (response.statusCode == 200) {
+        var decodedData = jsonDecode(response.body);
+        double lastPrice = decodedData['last'];
+        prices[coin] = lastPrice.toStringAsFixed(0);
+      } else {
+        print(response.statusCode);
+        throw 'Problem with get request';
+      }
     }
+    return prices;
   }
 }

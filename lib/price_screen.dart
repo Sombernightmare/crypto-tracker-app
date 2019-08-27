@@ -10,7 +10,8 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'AUD';
-  String bitcoinValue = '?';
+  Map<String, String> coinValues = {};
+  bool isWaiting = false;
 
   DropdownButton<String> androidDropdown() {
     List<DropdownMenuItem<String>> dropDownList = [];
@@ -49,14 +50,31 @@ class _PriceScreenState extends State<PriceScreen> {
   }
 
   void getData() async {
+    isWaiting = true;
     try {
       var data = await CoinInfo().getCoinData(selectedCurrency);
+      isWaiting = false;
       setState(() {
-        bitcoinValue = data.toString();
+        coinValues = data;
       });
     } catch (e) {
       print('hi');
     }
+  }
+
+  Column createCard() {
+    List<CoinCard> coinCards = [];
+
+    for (String coin in cryptoList) {
+      coinCards.add(CoinCard(
+          coin: coin,
+          selectedCurrency: selectedCurrency,
+          value: isWaiting ? '?' : coinValues[coin]));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: coinCards,
+    );
   }
 
   @override
@@ -75,27 +93,7 @@ class _PriceScreenState extends State<PriceScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(18, 18, 18, 0),
-              child: Card(
-                color: Color(0xff00adb5),
-                elevation: 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 28),
-                  child: Text(
-                    '1 BTC = $bitcoinValue $selectedCurrency',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Color(0xffEEEEEE),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            createCard(),
             Container(
                 height: 150,
                 alignment: Alignment.center,
@@ -103,6 +101,39 @@ class _PriceScreenState extends State<PriceScreen> {
                 color: Color(0xff00adb5),
                 child: Platform.isAndroid ? androidDropdown() : iosPicker()),
           ]),
+    );
+  }
+}
+
+class CoinCard extends StatelessWidget {
+  const CoinCard({this.coin, this.selectedCurrency, this.value});
+
+  final String coin;
+  final String selectedCurrency;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(18, 18, 18, 0),
+      child: Card(
+        color: Color(0xff00adb5),
+        elevation: 5,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 28),
+          child: Text(
+            '1 $coin = $value $selectedCurrency',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              color: Color(0xffEEEEEE),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
